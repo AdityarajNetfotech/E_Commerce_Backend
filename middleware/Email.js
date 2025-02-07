@@ -2,7 +2,7 @@ import { transporter } from "./EmailConfig.js";
 export const sendVerificationCode=async(email,verificationCode)=>{
     try{
          const response = await transporter.sendMail({
-                    from: '"Netfotect solution 👻" <aditya@netfotech.in>', // sender address
+                    from: '"Netfotech solutions 👻" <aditya@netfotech.in>', // sender address
                     to: email, // list of receivers
                     subject: "Verify your email", // Subject line
                     text: "Verify your email", // plain text body
