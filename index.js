@@ -1,5 +1,5 @@
-import express from 'express'
 import dotenv from 'dotenv'
+import express from 'express'
 import cors from 'cors';
 import db from './libs/db.js'
 import AuthRoutes from './routes/Authroutes.js'
