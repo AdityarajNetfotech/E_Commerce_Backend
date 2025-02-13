@@ -1,35 +1,47 @@
-import dotenv from 'dotenv'
-import express from 'express'
-import cors from 'cors';
-import db from './libs/db.js'
-import AuthRoutes from './routes/Authroutes.js'
-import SchoolRoutes from './routes/Schoolroutes.js'
-import AdminRoutes from './routes/Adminroutes.js'
-import session from "express-session"
+import dotenv from "dotenv";
+import express from "express";
+import cors from "cors";
+import db from "./libs/db.js";
+import session from "express-session";
 
+// ✅ Corrected ES Module imports for routes
+import adminRoutes from "./routes/Adminroutes.js";
+import schoolRoutes from "./routes/Schoolroutes.js";
+import productRoutes from "./routes/Productroutes.js";
+import studentRoutes from "./routes/Studentroutes.js";
 
-dotenv.config()
-const PORT=process.env.PORT || 8000
-db()
-const app=express()
-app.use(cors({
+dotenv.config();
+const PORT = process.env.PORT || 8000;
+db();
+
+const app = express();
+
+app.use(
+  cors({
     origin: "http://localhost:5173", // Allow only your frontend URL
     credentials: true, // Allow cookies and authentication headers
     methods: ["GET", "POST", "PUT", "DELETE"], // Allowed HTTP methods
     allowedHeaders: ["Content-Type", "Authorization"], // Allow these headers
-  })); 
-  app.use(session({
-    secret: 'your-secret-key',
+  })
+);
+
+app.use(
+  session({
+    secret: "your-secret-key",
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false } // Change to `true` if using HTTPS
-}));
-app.use(express.json())
-app.use('/auth',AuthRoutes)
-app.use('/school',SchoolRoutes)
-app.use('/admin',AdminRoutes)
+    cookie: { secure: false }, // Change to `true` if using HTTPS
+  })
+);
 
+app.use(express.json());
 
-app.listen(PORT,()=>{
-    console.log(`App is running on port ${PORT}`)
-})
+// ✅ Corrected ES Module usage for route imports
+app.use("/api/admin", adminRoutes);
+app.use("/api/school", schoolRoutes);
+app.use("/api/product", productRoutes);
+app.use("/api/student", studentRoutes);
+
+app.listen(PORT, () => {
+  console.log(`App is running on port ${PORT}`);
+});

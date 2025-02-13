@@ -1,151 +1,92 @@
-import Schoolmodel from "../models/School.js";
-import bcryptjs from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import asyncHandler from "express-async-handler";
+import School from "../models/School.js";
+import generateToken from "../utils/generateToken.js";
+import cloudinary from "../libs/cloudinary.js";
+import Product from "../models/Product.js";
 
- const Schoolregister = async (req, res) => {
-  try {
-    const { email, password, name, mobileNumber, Address, affiliationNumber } = req.body;
-    if (!email || !password || !name || !mobileNumber || !Address || !affiliationNumber) {
-      return res.status(400).json({ success: false, message: 'All fields are required' });
-    }
-    const existsUser = await Schoolmodel.findOne({ email });
-    if (existsUser) {
-      return res.status(400).json({ success: false, message: "User already exists, please log in" });
-    }
-    const hashedPassword = await bcryptjs.hash(password, 10);
-    const user = new Schoolmodel({
-      email,
-      password: hashedPassword,
-      name,
-      mobileNumber,
-      Address,
-      affiliationNumber
+// ✅ Register School (No Token Generated Here)
+export const registerSchool = asyncHandler(async (req, res) => {
+  const { name, email, password, mobile, address, affiliationNumber } = req.body;
+  let affiliationCertificate = "";
+
+  // Upload certificate if provided
+  if (req.file) {
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: "school_certificates",
     });
-    await user.save();
-    user.password = undefined;
-    return res.status(200).json({
-      success: true,
-      message: "School registered successfully",
-      user,
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ success: false, message: 'Internal server error' });
+    affiliationCertificate = result.secure_url;
   }
-}
-const SchoolLogin = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    
-    if (!email || !password) {
-      return res.status(400).json({ success: false, message: 'Email and password are required' });
-    }
 
-    const user = await Schoolmodel.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ success: false, message: 'User does not exist' });
-    }
+  // Check if the school is already registered
+  const schoolExists = await School.findOne({ email });
 
-    const isPasswordValid = await bcryptjs.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(400).json({ success: false, message: 'Invalid credentials' });
-    }
-
-    user.password = undefined; 
-
-    return res.status(200).json({
-      success: true,
-      message: 'Login successful',
-      user,
-      // token: token,
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ success: false, message: 'Internal server error' });
+  if (schoolExists) {
+    return res.status(400).json({ message: "School already registered" });
   }
-}
-const SchoolLogout = (req, res) => {
-  try {
-    return res.status(200).json({
-      success: true,
-      message: 'Logout successful',
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ success: false, message: 'Internal server error' });
+
+  // Create a new school
+  const school = await School.create({
+    name,
+    email,
+    password,
+    mobile,
+    address,
+    affiliationNumber,
+    affiliationCertificate, // Store Cloudinary URL
+  });
+
+  if (school) {
+    res.status(201).json({ message: "Registration request sent to admin" });
+  } else {
+    res.status(400).json({ message: "Invalid school data" });
   }
-}
-const getAllSchools = async (req, res) => {
-  try {
-    const schools = await Schoolmodel.find(); // Fetching all school records from the database
-    if (!schools || schools.length === 0) {
-      return res.status(404).json({ success: false, message: 'No schools found' });
-    }
-    return res.status(200).json({
-      success: true,
-      message: 'Schools fetched successfully',
-      schools,
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ success: false, message: 'Internal server error' });
+});
+
+// ✅ Login School (Token Generated Here)
+export const loginSchool = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+  const school = await School.findOne({ email });
+
+  if (!school) {
+    return res.status(401).json({ message: "Invalid email or password" });
   }
-}
-const deleteSchool = async (req, res) => {
-  try {
-    const { schoolId } = req.params; // Assuming the school ID is passed in the request parameters
 
-    if (!schoolId) {
-      return res.status(400).json({ success: false, message: 'School ID is required' });
-    }
-
-    const school = await Schoolmodel.findByIdAndDelete(schoolId); // Find and delete the school by its ID
-
-    if (!school) {
-      return res.status(404).json({ success: false, message: 'School not found' });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: 'School deleted successfully',
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ success: false, message: 'Internal server error' });
+  const isMatch = await school.matchPassword(password);
+  if (!isMatch) {
+    return res.status(401).json({ message: "Invalid email or password" });
   }
-}
-const updateSchoolDetails = async (req, res) => {
-  try {
-    const { schoolId } = req.params;
-    const updates = req.body;
 
-    if (!schoolId) {
-      return res.status(400).json({ success: false, message: "School ID is required" });
-    }
-
-    // Check if password is being updated and hash it
-    if (updates.password) {
-      updates.password = await bcryptjs.hash(updates.password, 10);
-    }
-
-    const updatedSchool = await Schoolmodel.findByIdAndUpdate(schoolId, updates, {
-      new: true, // Return the updated document
-      runValidators: true, // Ensure validations are applied
-    });
-
-    if (!updatedSchool) {
-      return res.status(404).json({ success: false, message: "School not found" });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "School details updated successfully",
-      school: updatedSchool,
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ success: false, message: "Internal server error" });
+  if (!school.isApproved) {
+    return res.status(403).json({ message: "School not approved by Admin" });
   }
-};
 
-export {Schoolregister,SchoolLogin,SchoolLogout,getAllSchools,deleteSchool,updateSchoolDetails}
+  res.json({
+    _id: school.id,
+    name: school.name,
+    email: school.email,
+    mobile: school.mobile,
+    address: school.address,
+    affiliationNumber: school.affiliationNumber,
+    affiliationCertificate: school.affiliationCertificate,
+    isApproved: school.isApproved,
+    token: generateToken(school._id, "school"),
+  });
+});
+
+// ✅ Get School Dashboard
+export const getSchoolDashboard = asyncHandler(async (req, res) => {
+  const school = await School.findById(req.school._id).select("-password");
+
+  if (!school) {
+    return res.status(404).json({ message: "School not found" });
+  }
+
+  // Fetch all products added by this school
+  const products = await Product.find({ school: req.school._id });
+
+  res.json({
+    message: `Welcome to your dashboard, ${school.name}!`,
+    schoolDetails: school,
+    products, // ✅ Include school's products in the response
+  });
+});
