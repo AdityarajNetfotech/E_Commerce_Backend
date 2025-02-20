@@ -29,4 +29,23 @@ const sendOTP = async (email, otp) => {
   }
 };
 
-export default sendOTP; // Correct ES Module export
+// Function to send a general email
+const sendEmail = async (email, subject, message) => {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: subject,
+    text: message,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Email sent to ${email}`);
+  } catch (error) {
+    console.error("Error sending email:", error);
+    throw new Error("Failed to send email");
+  }
+};
+
+// Use Named Exports
+export { sendOTP, sendEmail };

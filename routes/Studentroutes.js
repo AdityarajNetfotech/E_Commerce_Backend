@@ -7,7 +7,8 @@ import {
   resendOTP, 
   forgotPassword, 
   verifyForgotPasswordOTP, 
-  resetPassword 
+  resetPassword,
+  logoutStudent 
 } from "../controllers/Student.js";
 import { protectStudent } from "../middleware/authMiddleware.js";
 
@@ -26,6 +27,7 @@ router.post("/reset-password", resetPassword);
 
 // ✅ Student login
 router.post("/login", loginStudent);
+router.post("/logout", logoutStudent);
 
 // ✅ Get products for the logged-in student (Only products from their school)
 router.get("/products", protectStudent, getStudentProducts);

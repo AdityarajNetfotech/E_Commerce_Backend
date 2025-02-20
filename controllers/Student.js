@@ -2,7 +2,7 @@ import asyncHandler from "express-async-handler";
 import Student from "../models/Student.js";
 import School from "../models/School.js";
 import Product from "../models/Product.js";
-import sendOTP from "../utils/sendEmail.js"; // ✅ Import sendOTP function
+import {sendOTP} from "../utils/sendEmail.js"; // ✅ Import sendOTP function
 import generateToken from "../utils/generateToken.js";
 
 // ✅ Generate OTP
@@ -235,3 +235,14 @@ export const getStudentProducts = asyncHandler(async (req, res) => {
   const products = await Product.find({ school: req.student.school._id });
   res.json(products);
 });
+
+export const logoutStudent = asyncHandler(async (req, res) => {
+  // Clear the token cookie by setting it to an empty value and expiring it immediately.
+  res.cookie("token", "", {
+    httpOnly: true,
+    expires: new Date(0), // Immediately expire the cookie
+  });
+
+  res.json({ message: "Student Logged out successfully" });
+});
+

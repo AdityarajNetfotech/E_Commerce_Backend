@@ -3,28 +3,32 @@ import School from "../models/School.js";
 import generateToken from "../utils/generateToken.js";
 import cloudinary from "../libs/cloudinary.js";
 import Product from "../models/Product.js";
+import {sendEmail} from "../utils/sendEmail.js"
 
 // ✅ Register School (No Token Generated Here)
 export const registerSchool = asyncHandler(async (req, res) => {
   const { name, email, password, mobile, address, affiliationNumber } = req.body;
   let affiliationCertificate = "";
-
+ 
   // Upload certificate if provided
   if (req.file) {
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: "school_certificates",
-    });
-    affiliationCertificate = result.secure_url;
+    try {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "school_certificates",
+      });
+      affiliationCertificate = result.secure_url;
+    } catch (error) {
+      console.error("Error uploading certificate:", error);
+      return res.status(500).json({ message: "Failed to upload affiliation certificate", error: error.message });
+    }
   }
-
-  // Check if the school is already registered
+ 
   const schoolExists = await School.findOne({ email });
-
+ 
   if (schoolExists) {
     return res.status(400).json({ message: "School already registered" });
   }
-
-  // Create a new school
+ 
   const school = await School.create({
     name,
     email,
@@ -34,13 +38,24 @@ export const registerSchool = asyncHandler(async (req, res) => {
     affiliationNumber,
     affiliationCertificate, // Store Cloudinary URL
   });
-
+ 
   if (school) {
-    res.status(201).json({ message: "Registration request sent to admin" });
+    // Send registration email
+    const subject = "School Registration Successful";
+    const message = `Dear ${school.name},\n\nThank you for registering. Your request has been received, and we will notify you once the admin approves your account.\n\nBest Regards,\nAdmin Team`;
+ 
+    try {
+      await sendEmail(school.email, subject, message);
+      res.status(201).json({ message: "Registration request sent to admin, confirmation email sent" });
+    } catch (error) {
+      console.error("Error sending email:", error); // Logs full error
+      return res.status(500).json({ message: "School registered but failed to send email", error: error.message || error });
+    }
   } else {
     res.status(400).json({ message: "Invalid school data" });
   }
 });
+ 
 
 // ✅ Login School (Token Generated Here)
 export const loginSchool = asyncHandler(async (req, res) => {
@@ -73,6 +88,16 @@ export const loginSchool = asyncHandler(async (req, res) => {
   });
 });
 
+export const logoutSchool = asyncHandler(async (req, res) => {
+  res.cookie("token", "", {
+    httpOnly: true,
+    expires: new Date(0), // Expire the cookie immediately
+  });
+
+  res.json({ message: "Logged out successfully" });
+});
+
+
 // ✅ Get School Dashboard
 export const getSchoolDashboard = asyncHandler(async (req, res) => {
   const school = await School.findById(req.school._id).select("-password");
@@ -89,4 +114,18 @@ export const getSchoolDashboard = asyncHandler(async (req, res) => {
     schoolDetails: school,
     products, // ✅ Include school's products in the response
   });
+});
+
+
+export const getAllSchools = asyncHandler(async (req, res) => {
+  try {
+    const schools = await School.find().select("-password"); // Exclude passwords for security
+    res.json({
+      message: "All registered schools fetched successfully",
+      schools,
+    });
+  } catch (error) {
+    console.error("Error fetching schools:", error);
+    res.status(500).json({ message: "Failed to fetch schools", error: error.message });
+  }
 });
