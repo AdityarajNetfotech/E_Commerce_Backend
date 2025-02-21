@@ -106,3 +106,15 @@ export const logoutAdmin = asyncHandler(async (req, res) => {
   res.json({ message: "Logged out successfully" });
 });
 
+export const getAllSchools = asyncHandler(async (req, res) => {
+  try {
+    const schools = await School.find().select("-password"); // Exclude passwords for security
+    res.json({
+      message: "All registered schools fetched successfully",
+      schools,
+    });
+  } catch (error) {
+    console.error("Error fetching schools:", error);
+    res.status(500).json({ message: "Failed to fetch schools", error: error.message });
+  }
+});

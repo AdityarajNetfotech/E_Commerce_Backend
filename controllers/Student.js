@@ -246,3 +246,5 @@ export const logoutStudent = asyncHandler(async (req, res) => {
   res.json({ message: "Student Logged out successfully" });
 });
 
+
+

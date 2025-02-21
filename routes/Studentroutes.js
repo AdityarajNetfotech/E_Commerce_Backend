@@ -8,7 +8,8 @@ import {
   forgotPassword, 
   verifyForgotPasswordOTP, 
   resetPassword,
-  logoutStudent 
+  logoutStudent,
+  
 } from "../controllers/Student.js";
 import { protectStudent } from "../middleware/authMiddleware.js";
 
@@ -31,5 +32,8 @@ router.post("/logout", logoutStudent);
 
 // ✅ Get products for the logged-in student (Only products from their school)
 router.get("/products", protectStudent, getStudentProducts);
+
+// 
+
 
 export default router; // Correct ES Module export

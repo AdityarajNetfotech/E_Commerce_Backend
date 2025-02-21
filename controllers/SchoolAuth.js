@@ -1,15 +1,16 @@
 import asyncHandler from "express-async-handler";
 import School from "../models/School.js";
+import Student from "../models/Student.js";
 import generateToken from "../utils/generateToken.js";
 import cloudinary from "../libs/cloudinary.js";
 import Product from "../models/Product.js";
-import {sendEmail} from "../utils/sendEmail.js"
+import { sendEmail } from "../utils/sendEmail.js"
 
 // ✅ Register School (No Token Generated Here)
 export const registerSchool = asyncHandler(async (req, res) => {
   const { name, email, password, mobile, address, affiliationNumber } = req.body;
   let affiliationCertificate = "";
- 
+
   // Upload certificate if provided
   if (req.file) {
     try {
@@ -22,13 +23,13 @@ export const registerSchool = asyncHandler(async (req, res) => {
       return res.status(500).json({ message: "Failed to upload affiliation certificate", error: error.message });
     }
   }
- 
+
   const schoolExists = await School.findOne({ email });
- 
+
   if (schoolExists) {
     return res.status(400).json({ message: "School already registered" });
   }
- 
+
   const school = await School.create({
     name,
     email,
@@ -38,12 +39,12 @@ export const registerSchool = asyncHandler(async (req, res) => {
     affiliationNumber,
     affiliationCertificate, // Store Cloudinary URL
   });
- 
+
   if (school) {
     // Send registration email
     const subject = "School Registration Successful";
     const message = `Dear ${school.name},\n\nThank you for registering. Your request has been received, and we will notify you once the admin approves your account.\n\nBest Regards,\nAdmin Team`;
- 
+
     try {
       await sendEmail(school.email, subject, message);
       res.status(201).json({ message: "Registration request sent to admin, confirmation email sent" });
@@ -55,7 +56,7 @@ export const registerSchool = asyncHandler(async (req, res) => {
     res.status(400).json({ message: "Invalid school data" });
   }
 });
- 
+
 
 // ✅ Login School (Token Generated Here)
 export const loginSchool = asyncHandler(async (req, res) => {
@@ -116,16 +117,31 @@ export const getSchoolDashboard = asyncHandler(async (req, res) => {
   });
 });
 
-
-export const getAllSchools = asyncHandler(async (req, res) => {
+export const getStudentsBySchool = asyncHandler(async (req, res) => {
   try {
-    const schools = await School.find().select("-password"); // Exclude passwords for security
+    const schoolId = req.school._id;
+
+    // Find students belonging to this school
+    const students = await Student.find({ school: schoolId }).select("-password");
+
     res.json({
-      message: "All registered schools fetched successfully",
-      schools,
+      message: "Students fetched successfully",
+      students,
     });
   } catch (error) {
-    console.error("Error fetching schools:", error);
-    res.status(500).json({ message: "Failed to fetch schools", error: error.message });
+    console.error("Error fetching students:", error);
+    res.status(500).json({ message: "Failed to fetch students", error: error.message });
   }
+});
+
+
+export const deleteStudent = asyncHandler(async (req, res) => {
+  const studentId = req.params.id;
+  const schoolId = req.school._id;
+  const student = await Student.findOne({ _id: studentId, school: schoolId });
+  if (!student) {
+    return res.status(404).json({ message: "Student not found or not registered under this school" });
+  }
+  await student.deleteOne();
+  res.json({ message: "Student deleted successfully" });
 });
