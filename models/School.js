@@ -10,7 +10,15 @@ const schoolSchema = new mongoose.Schema({
   affiliationNumber: { type: String, required: true, unique: true },
   affiliationCertificate: { type: String }, // Optional field (Cloudinary URL)
   isApproved: { type: Boolean, default: false },
-});
+
+  otp: { type: String },
+  otpExpires: { type: Date },
+
+    // 🔹 Forgot Password OTP
+    resetOtp: { type: String }, // Stores OTP for password reset
+    resetOtpExpires: { type: Date }, // OTP expiration time for password reset
+
+}, { timestamps: true });
 
 // Hash password before saving
 schoolSchema.pre("save", async function (next) {

@@ -4,7 +4,12 @@ import Student from "../models/Student.js";
 import generateToken from "../utils/generateToken.js";
 import cloudinary from "../libs/cloudinary.js";
 import Product from "../models/Product.js";
+import {sendOTP} from "../utils/sendEmail.js";
 import { sendEmail } from "../utils/sendEmail.js"
+
+
+// ✅ Generate OTP
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString(); 
 
 // ✅ Register School (No Token Generated Here)
 export const registerSchool = asyncHandler(async (req, res) => {
@@ -144,4 +149,119 @@ export const deleteStudent = asyncHandler(async (req, res) => {
   }
   await student.deleteOne();
   res.json({ message: "Student deleted successfully" });
+});
+
+
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  // Find student by email
+  const school = await School.findOne({ email });
+
+  if (!school) {
+    return res.status(400).json({ message: "School not found" });
+  }
+
+  // Generate OTP for password reset
+  const otp = generateOTP();
+  const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
+
+  // Update student with OTP for password reset
+  school.resetOtp = otp;
+  school.resetOtpExpires = otpExpires;
+  await school.save();
+
+  // Send the OTP via email
+  await sendOTP(email, otp);
+
+  res.json({ message: "Password reset OTP sent to email. Please verify." });
+});
+
+export const verifyForgotPasswordOTP = asyncHandler(async (req, res) => {
+  const { otp } = req.body;
+
+  if (!otp) {
+    return res.status(400).json({ message: "OTP is required" });
+  }
+
+  // Find student by OTP and check if OTP is not expired
+  const school = await School.findOne({
+    resetOtp: otp,
+    resetOtpExpires: { $gt: Date.now() }, // Ensures OTP is not expired
+  });
+
+  if (!school) {
+    return res.status(400).json({ message: "Invalid or expired OTP" });
+  }
+
+  // Clear OTP after successful verification
+  school.resetOtp = undefined;
+  school.resetOtpExpires = undefined;
+  await school.save();
+
+  res.json({ message: "OTP verified successfully. You can now reset your password." });
+});
+
+export const resetPassword = asyncHandler(async (req, res) => {
+  const { email, newPassword, confirmPassword } = req.body;
+
+  if (!email || !newPassword || !confirmPassword) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  if (newPassword !== confirmPassword) {
+    return res.status(400).json({ message: "Passwords do not match" });
+  }
+
+  // Find student by email
+  const school = await School.findOne({ email });
+
+  if (!school) {
+    return res.status(400).json({ message: "School not found" });
+  }
+
+  // ✅ Directly assign new password (pre-save hook will hash it)
+  school.password = newPassword;
+
+  // Save updated student
+  await school.save();
+
+  res.json({ message: "Password reset successful. You can now log in with your new password." });
+});
+
+export const resendOTP = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  // Find student by email
+  const school = await School.findOne({ email });
+
+  if (!school) {
+    return res.status(400).json({ message: "School not found" });
+  }
+
+  if (school.isVerified) {
+    return res.status(400).json({ message: "Email already verified. Please login." });
+  }
+
+  // Generate a new OTP
+  const newOTP = generateOTP();
+  const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // New OTP valid for 10 minutes
+
+  // Update student with new OTP
+  school.otp = newOTP;
+  school.otpExpires = otpExpires;
+  await school.save();
+
+  // Send the new OTP via email
+  await sendOTP(email, newOTP);
+
+  res.json({ message: "New OTP sent to email. Please verify to complete registration." });
 });
