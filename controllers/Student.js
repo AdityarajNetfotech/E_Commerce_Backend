@@ -10,9 +10,9 @@ const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString()
 
 // ✅ Step 1: Register a new student and send OTP
 export const registerStudent = asyncHandler(async (req, res) => {
-  const { name, email, password, schoolId } = req.body;
+  const { name, email, password, schoolId, grade, gender, number} = req.body;
 
-  if (!name || !email || !password || !schoolId) {
+  if (!name || !email || !password || !schoolId || !grade || !gender || !number) {
     return res.status(400).json({ message: "Please provide all fields" });
   }
 
@@ -38,6 +38,9 @@ export const registerStudent = asyncHandler(async (req, res) => {
     email,
     password,
     school: schoolId,
+    grade,
+    gender,
+    number,
     otp,
     otpExpires,
     isVerified: false,
@@ -81,6 +84,9 @@ export const verifyStudentOTP = asyncHandler(async (req, res) => {
     name: student.name,
     email: student.email,
     school: student.school,
+    grade: student.grade,
+    gender: student.gender,
+    number: student.number,
     token: generateToken(student._id, "student"),
   });
 });

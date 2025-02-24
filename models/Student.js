@@ -11,6 +11,22 @@ const studentSchema = new mongoose.Schema(
       ref: "School",
       required: true,
     },
+    grade:{
+      type: Number, 
+      required: true, 
+      min: 1, 
+      max: 12
+    },
+    gender: { 
+      type: String, 
+      required: true, 
+      enum: ["Male", "Female", "Others"] 
+    },
+    number:{
+      type: Number,
+      required:true,
+      unique:true
+    },
 
     // 🔹 Email Verification OTP
     otp: { type: String },
