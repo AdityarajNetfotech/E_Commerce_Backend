@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 import Admin from "../models/Admin.js";
 import School from "../models/School.js";
+import Student from "../models/Student.js";
 import generateToken from "../utils/generateToken.js";
 import {sendEmail} from "../utils/sendEmail.js";
 
@@ -89,7 +90,7 @@ export const disapproveSchool = asyncHandler(async (req, res) => {
   res.json({ message: "School disapproved successfully", school });
 });
 
-// Get Pending Schools
+// get pending schools
 export const getPendingSchools = asyncHandler(async (req, res) => {
   const pendingSchools = await School.find({ isApproved: false }).select("-password");
   res.json(pendingSchools);
@@ -106,6 +107,7 @@ export const logoutAdmin = asyncHandler(async (req, res) => {
   res.json({ message: "Logged out successfully" });
 });
 
+//get all school
 export const getAllSchools = asyncHandler(async (req, res) => {
   try {
     const schools = await School.find().select("-password"); // Exclude passwords for security
@@ -116,5 +118,59 @@ export const getAllSchools = asyncHandler(async (req, res) => {
   } catch (error) {
     console.error("Error fetching schools:", error);
     res.status(500).json({ message: "Failed to fetch schools", error: error.message });
+  }
+});
+
+// Delete School
+export const deleteSchool = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+    const school = await School.findById(id);
+
+    if (!school) {
+      return res.status(404).json({ message: "School not found" });
+    }
+
+    await school.deleteOne();
+
+    res.json({ message: "School deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting school:", error);
+    res.status(500).json({ message: "Failed to delete school", error: error.message });
+  }
+});
+
+// Get all Student
+
+export const getAllStudents = asyncHandler(async (req, res) => {
+  try {
+    const students = await Student.find().select("-password"); // Exclude passwords for security
+    res.json({
+      message: "All students fetched successfully",
+      students,
+    });
+  } catch (error) {
+    console.error("Error fetching students:", error);
+    res.status(500).json({ message: "Failed to fetch students", error: error.message });
+  }
+});
+
+// Delete Student
+
+export const deleteStudent = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+    const student = await Student.findById(id);
+
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    await student.deleteOne();
+
+    res.json({ message: "Student deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting student:", error);
+    res.status(500).json({ message: "Failed to delete student", error: error.message });
   }
 });
