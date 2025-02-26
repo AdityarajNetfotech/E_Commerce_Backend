@@ -1,38 +1,61 @@
 import mongoose from "mongoose";
 
+const uniformSchema = new mongoose.Schema({
+  subCategory: { type: String, required: true },
+  productDetail: { type: String, required: true },
+  gender: { type: String, enum: ["Male", "Female", "Unisex"], required: true },
+  SKU: { type: String, required: true, unique: true },
+  variations: [
+    {
+      variationType: { type: String, required: true },
+      variationInfo: { type: String, required: true },
+      subVariations: [
+        {
+          subVariationType: { type: String},
+          subVariationInfo: { type: String},
+          stockQty: { type: Number, default: 1 },
+          price: { type: Number },
+        },
+      ],
+    },
+  ],
+});
+
+const bookSchema = new mongoose.Schema({
+  grade: { type: String, required: true },
+  subject: { type: String, required: true },
+  stockQty: { type: Number, required: true, default: 1 },
+  price: { type: Number, required: true },
+});
+
+const stationarySchema = new mongoose.Schema({
+  stockQty: { type: Number, required: true, default: 1 },
+  price: { type: Number, required: true },
+});
+
 const productSchema = new mongoose.Schema(
   {
     school: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "School", // Reference to the School that owns the product
+      ref: "School",
       required: true,
     },
-    name: {
+    category: {
       type: String,
+      enum: ["Uniform", "Books", "Stationary"],
       required: true,
     },
-    description: {
-      type: String,
-      required: true,
-    },
-    price: {
-      type: Number,
-      required: true,
-    },
-    stock: {
-      type: Number,
-      required: true,
-      default: 1, // Default stock is 1
-    },
-    image: {
-      type: String, // Store Cloudinary image URL here
-      required: false,
-    },
+    name: { type: String, required: true },
+    description: { type: String, required: true },
+    price: { type: Number, required: true },
+    stock: { type: Number, required: true, default: 1 },
+    image: [{ type: String, required: false }],
+    uniformDetails: { type: uniformSchema, required: function () { return this.category === "Uniform"; } },
+    bookDetails: { type: bookSchema, required: function () { return this.category === "Books"; } },
+    stationaryDetails: { type: stationarySchema, required: function () { return this.category === "Stationary"; } },
   },
-  {
-    timestamps: true, // Automatically creates "createdAt" and "updatedAt"
-  }
+  { timestamps: true }
 );
 
 const Product = mongoose.model("Product", productSchema);
-export default Product; // Correct ES Module export
+export default Product;

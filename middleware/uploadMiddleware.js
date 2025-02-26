@@ -13,8 +13,8 @@ const createStorage = (folderName) =>
     },
   });
 
-// Separate upload instances for products and certificates
-const uploadProductImage = multer({ storage: createStorage("product-images") });
+// ✅ Modify multer to handle multiple files
+const uploadProductImages = multer({ storage: createStorage("product-images") });
 const uploadAffiliationCertificate = multer({ storage: createStorage("school-certificates") });
 
-export { uploadProductImage, uploadAffiliationCertificate }; // Correct ES Module export
+export { uploadProductImages, uploadAffiliationCertificate }; // Export the updated upload function
