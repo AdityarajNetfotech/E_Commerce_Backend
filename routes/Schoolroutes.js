@@ -1,5 +1,5 @@
 import express from "express";
-import { registerSchool, loginSchool, getSchoolDashboard,logoutSchool,deleteStudent,getStudentsBySchool,forgotPassword,resendOTP,verifyForgotPasswordOTP, resetPassword,  } from "../controllers/SchoolAuth.js";
+import { registerSchool, loginSchool, getSchoolDashboard,logoutSchool,deleteStudent,getStudentsBySchool,forgotPassword,resendOTP,verifyForgotPasswordOTP, resetPassword, updateSchool  } from "../controllers/SchoolAuth.js";
 import { protectSchool } from "../middleware/authMiddleware.js";
 import { uploadAffiliationCertificate } from "../middleware/uploadMiddleware.js";
 
@@ -13,7 +13,7 @@ router.post("/resend-otp", resendOTP);
 router.post("/forgot-password", forgotPassword);
 router.post("/verify-forgot-password-otp", verifyForgotPasswordOTP);
 
-
+router.put("/update", protectSchool,  updateSchool);
 router.get("/students", protectSchool,getStudentsBySchool);
 router.delete("/students/:id", protectSchool, deleteStudent);
 
