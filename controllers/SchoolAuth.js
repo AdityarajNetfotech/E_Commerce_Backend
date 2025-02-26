@@ -94,6 +94,61 @@ export const loginSchool = asyncHandler(async (req, res) => {
   });
 });
 
+// update school
+export const updateSchool = asyncHandler(async (req, res) => {
+  const schoolId = req.school._id; // Get logged-in school ID
+  const { name, email, mobile, address, affiliationNumber } = req.body;
+  let updatedCertificateUrl = null;
+
+  try {
+    const school = await School.findById(schoolId);
+
+    if (!school) {
+      return res.status(404).json({ message: "School not found" });
+    }
+
+    // Handle file upload if provided
+    if (req.file) {
+      try {
+        const result = await cloudinary.uploader.upload(req.file.path, {
+          folder: "school_certificates",
+        });
+        updatedCertificateUrl = result.secure_url;
+      } catch (error) {
+        console.error("Error uploading certificate:", error);
+        return res.status(500).json({ message: "Failed to upload affiliation certificate", error: error.message });
+      }
+    }
+
+    // Update fields only if provided
+    if (name) school.name = name;
+    if (email) school.email = email;
+    if (mobile) school.mobile = mobile;
+    if (address) school.address = address;
+    if (affiliationNumber) school.affiliationNumber = affiliationNumber;
+    if (updatedCertificateUrl) school.affiliationCertificate = updatedCertificateUrl;
+
+    await school.save();
+
+    res.json({
+      message: "School details updated successfully",
+      school: {
+        _id: school._id,
+        name: school.name,
+        email: school.email,
+        mobile: school.mobile,
+        address: school.address,
+        affiliationNumber: school.affiliationNumber,
+        affiliationCertificate: school.affiliationCertificate,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating school details:", error);
+    res.status(500).json({ message: "Failed to update school details", error: error.message });
+  }
+});
+
+
 export const logoutSchool = asyncHandler(async (req, res) => {
   res.cookie("token", "", {
     httpOnly: true,
