@@ -9,6 +9,8 @@ import {
   verifyForgotPasswordOTP, 
   resetPassword,
   logoutStudent,
+  updateStudent,
+  getStudentDetails,
   
 } from "../controllers/Student.js";
 import { protectStudent } from "../middleware/authMiddleware.js";
@@ -29,8 +31,10 @@ router.post("/reset-password", resetPassword);
 // ✅ Student login
 router.post("/login", loginStudent);
 router.post("/logout", logoutStudent);
+router.put("/update", protectStudent ,updateStudent);
 
 // ✅ Get products for the logged-in student (Only products from their school)
+router.get("/profile", protectStudent , getStudentDetails);
 router.get("/products", protectStudent, getStudentProducts);
 
 // 
