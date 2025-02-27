@@ -2,9 +2,7 @@ import mongoose from "mongoose";
 
 const uniformSchema = new mongoose.Schema({
   subCategory: { type: String, required: true },
-  productDetail: { type: String, required: true },
   gender: { type: String, enum: ["Male", "Female", "Unisex"], required: true },
-  SKU: { type: String, required: true, unique: true },
   variations: [
     {
       variationType: { type: String, required: true },
@@ -47,9 +45,9 @@ const productSchema = new mongoose.Schema(
     },
     name: { type: String, required: true },
     description: { type: String, required: true },
-    price: { type: Number, required: true },
-    stock: { type: Number, required: true, default: 1 },
-    image: [{ type: String, required: false }],
+    productDetail: { type: String, required: true },
+    SKU: { type: String, required: true, unique: true },
+    image: [{ type: String, required: true }],
     uniformDetails: { type: uniformSchema, required: function () { return this.category === "Uniform"; } },
     bookDetails: { type: bookSchema, required: function () { return this.category === "Books"; } },
     stationaryDetails: { type: stationarySchema, required: function () { return this.category === "Stationary"; } },
