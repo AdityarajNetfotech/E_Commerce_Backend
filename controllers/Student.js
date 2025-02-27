@@ -152,6 +152,42 @@ export const loginStudent = asyncHandler(async (req, res) => {
   }
 });
 
+
+export const updateStudent = asyncHandler(async (req, res) => {
+  const { name, email, grade, gender, number } = req.body;
+
+  // Get student ID from authMiddleware (req.student._id)
+  const student = await Student.findById(req.student._id);
+
+  if (!student) {
+    return res.status(404).json({ message: "Student not found" });
+  }
+
+  // Update only if a field is provided in req.body
+  if (name) student.name = name;
+  if (email) student.email = email;
+  if (grade) student.grade = grade;
+  if (gender) student.gender = gender;
+  if (number) student.number = number;
+
+  // Save the updated student
+  const updatedStudent = await student.save();
+
+  res.json({
+    message: "Student updated successfully",
+    student: {
+      _id: updatedStudent._id,
+      name: updatedStudent.name,
+      email: updatedStudent.email,
+      grade: updatedStudent.grade,
+      gender: updatedStudent.gender,
+      number: updatedStudent.number,
+    },
+  });
+});
+
+
+
 // ✅ Forgot Password
 export const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
@@ -235,6 +271,26 @@ export const resetPassword = asyncHandler(async (req, res) => {
 
   res.json({ message: "Password reset successful. You can now log in with your new password." });
 });
+
+export const getStudentDetails = asyncHandler(async (req, res) => {
+  const student = await Student.findById(req.student._id).populate("school");
+
+  if (!student) {
+    return res.status(404).json({ message: "Student not found" });
+  }
+
+  res.json({
+    _id: student._id,
+    name: student.name,
+    email: student.email,
+    school: student.school,
+    grade: student.grade,
+    gender: student.gender,
+    number: student.number,
+    isVerified: student.isVerified,
+  });
+});
+
 
 // ✅ Get products for the logged-in student (Only from their school)
 export const getStudentProducts = asyncHandler(async (req, res) => {
