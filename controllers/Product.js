@@ -4,9 +4,9 @@ import cloudinary from "../libs/cloudinary.js";
 
 // ✅ Add a new product (Only for logged-in Schools)
 export const addProduct = asyncHandler(async (req, res) => {
-  const { name, description, price, stock, category } = req.body;
+  const { name, description, productDetail, SKU, category } = req.body;
 
-  if (!name || !description || !price || stock < 0 || !category) {
+  if (!name || !description || !productDetail || !SKU || !category) {
     return res.status(400).json({ message: "Please provide all required fields" });
   }
 
@@ -23,8 +23,8 @@ export const addProduct = asyncHandler(async (req, res) => {
     school: req.school._id,
     name,
     description,
-    price,
-    stock,
+    productDetail,
+    SKU,
     category,
     image: imageUrls,
   };
@@ -57,8 +57,6 @@ export const addProduct = asyncHandler(async (req, res) => {
   res.status(201).json(createdProduct);
 });
 
-
-
 // ✅ Get all products added by the logged-in school
 export const getSchoolProducts = asyncHandler(async (req, res) => {
   const products = await Product.find({ school: req.school._id });
@@ -78,28 +76,32 @@ export const updateProduct = asyncHandler(async (req, res) => {
     return res.status(401).json({ message: "Not authorized to update this product" });
   }
 
-  // Handle image update
-  if (req.file) {
+  // ✅ Handle multiple image updates
+  if (req.files && req.files.length > 0) {
+    // Delete old images from Cloudinary
     if (product.image.length > 0) {
-      const publicId = product.image[0].split("/").pop().split(".")[0]; // Extract Cloudinary public_id
-      await cloudinary.uploader.destroy(`product-images/${publicId}`);
+      for (const imgUrl of product.image) {
+        const publicId = imgUrl.split("/").pop().split(".")[0];
+        await cloudinary.uploader.destroy(`product-images/${publicId}`);
+      }
     }
-    product.image = [req.file.path]; // Save new image URL as an array
+    product.image = req.files.map((file) => file.path);
   }
 
-  product.name = name || product.name;
-  product.description = description || product.description;
-  product.price = price || product.price;
-  product.stock = stock || product.stock;
-  product.category = category || product.category;
+  // ✅ Update only provided fields
+  if (name) product.name = name;
+  if (description) product.description = description;
+  if (price !== undefined) product.price = price;
+  if (stock !== undefined) product.stock = stock;
+  if (category) product.category = category;
 
-  // Update category-specific details
+  // ✅ Update category-specific details (Ensure JSON parsing)
   if (category === "Uniform") {
-    product.uniformDetails = uniformDetails || product.uniformDetails;
+    product.uniformDetails = uniformDetails ? JSON.parse(uniformDetails) : product.uniformDetails;
   } else if (category === "Books") {
-    product.bookDetails = bookDetails || product.bookDetails;
+    product.bookDetails = bookDetails ? JSON.parse(bookDetails) : product.bookDetails;
   } else if (category === "Stationary") {
-    product.stationaryDetails = stationaryDetails || product.stationaryDetails;
+    product.stationaryDetails = stationaryDetails ? JSON.parse(stationaryDetails) : product.stationaryDetails;
   }
 
   const updatedProduct = await product.save();
@@ -118,10 +120,12 @@ export const deleteProduct = asyncHandler(async (req, res) => {
     return res.status(401).json({ message: "Not authorized to delete this product" });
   }
 
-  // Delete images from Cloudinary if exist
+  // ✅ Delete images from Cloudinary if exist
   if (product.image.length > 0) {
-    const publicId = product.image[0].split("/").pop().split(".")[0];
-    await cloudinary.uploader.destroy(`product-images/${publicId}`);
+    for (const imgUrl of product.image) {
+      const publicId = imgUrl.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(`product-images/${publicId}`);
+    }
   }
 
   await product.deleteOne();
