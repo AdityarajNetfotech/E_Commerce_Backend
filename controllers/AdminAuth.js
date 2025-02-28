@@ -102,9 +102,11 @@ export const logoutAdmin = asyncHandler(async (req, res) => {
   res.cookie("token", "", {
     httpOnly: true,
     expires: new Date(0), // Expire the cookie immediately
+    secure:true,
+    sameSite:"Strict"
   });
-
-  res.json({ message: "Logged out successfully" });
+  req.user = null;
+  res.json({ message: "Admin Logged out successfully" });
 });
 
 //get all school

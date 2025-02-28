@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.post("/register", uploadAffiliationCertificate.single("affiliationCertificate"), registerSchool);
 router.post("/login", loginSchool);
-router.post("/logout",protectSchool, logoutSchool);
+router.post("/logout", logoutSchool);
 router.post("/reset-password", resetPassword);
 router.post("/resend-otp", resendOTP);
 router.post("/forgot-password", forgotPassword);

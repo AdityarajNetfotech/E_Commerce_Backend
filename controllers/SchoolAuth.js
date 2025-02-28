@@ -150,14 +150,19 @@ export const updateSchool = asyncHandler(async (req, res) => {
 
 
 export const logoutSchool = asyncHandler(async (req, res) => {
+  console.log("Logout request received"); // Debugging
+
   res.cookie("token", "", {
     httpOnly: true,
     expires: new Date(0), // Expire the cookie immediately
+    secure: true,
+    sameSite: "Strict",
   });
 
-  res.json({ message: "Logged out successfully" });
-});
+  req.user = null;
 
+  res.json({ message: "School logged out successfully" });
+});
 
 // ✅ Get School Dashboard
 export const getSchoolDashboard = asyncHandler(async (req, res) => {

@@ -299,14 +299,21 @@ export const getStudentProducts = asyncHandler(async (req, res) => {
 });
 
 export const logoutStudent = asyncHandler(async (req, res) => {
-  // Clear the token cookie by setting it to an empty value and expiring it immediately.
+  // Clear the token cookie
   res.cookie("token", "", {
     httpOnly: true,
-    expires: new Date(0), // Immediately expire the cookie
+    expires: new Date(0), // Expire the cookie immediately
+    secure: true,
+    sameSite: "Strict",
   });
 
-  res.json({ message: "Student Logged out successfully" });
+  // Remove token from request
+  req.user = null;
+
+  // If using JWT, blacklist it (optional, depending on your auth system)
+  res.json({ message: "Student logged out successfully" });
 });
+
 
 
 
