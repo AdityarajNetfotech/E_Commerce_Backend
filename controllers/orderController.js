@@ -4,12 +4,17 @@ import Product from "../models/Product.js";
 
 // ✅ Place an Order (Stock Updates)
 export const placeOrder = asyncHandler(async (req, res) => {
-    const { school, orderItems } = req.body;
+    const { school, orderItems,address } = req.body;
     const studentId = req.student._id;
   
     if (!school || !orderItems || orderItems.length === 0) {
       return res.status(400).json({ message: "Invalid order data" });
     }
+
+    if (!address || !address.fullName || !address.phone || !address.street || !address.city || !address.state || !address.postalCode || !address.country) {
+      return res.status(400).json({ message: "Complete address details are required" });
+    }
+  
   
     let totalAmount = 0;
     let updatedOrderItems = [];
@@ -70,6 +75,7 @@ export const placeOrder = asyncHandler(async (req, res) => {
     const newOrder = new Order({
       student: studentId,
       school,
+      address,
       orderItems: updatedOrderItems,
       totalAmount,
     });
