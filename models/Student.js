@@ -27,6 +27,12 @@ const studentSchema = new mongoose.Schema(
       required:true,
       unique:true
     },
+    cart: [
+      {
+        product: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
+        quantity: { type: Number, required: true, default: 1 }
+      }
+    ],
 
     // 🔹 Email Verification OTP
     otp: { type: String },

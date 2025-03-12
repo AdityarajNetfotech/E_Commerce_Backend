@@ -10,6 +10,7 @@ import schoolRoutes from "./routes/Schoolroutes.js";
 import productRoutes from "./routes/Productroutes.js";
 import studentRoutes from "./routes/Studentroutes.js";
 import orderRoutes from "./routes/orderRoutes.js"
+import cartRoutes from "./routes/cartRoutes.js"
 
 dotenv.config();
 const PORT = process.env.PORT || 8000;
@@ -43,6 +44,7 @@ app.use("/api/school", schoolRoutes);
 app.use("/api/product", productRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api/order", orderRoutes);
+app.use("/api/cart", cartRoutes);
 
 app.listen(PORT, () => {
   console.log(`App is running on port ${PORT}`);
