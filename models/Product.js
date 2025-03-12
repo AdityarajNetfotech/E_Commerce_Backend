@@ -7,10 +7,12 @@ const uniformSchema = new mongoose.Schema({
     {
       variationType: { type: String, required: true },
       variationInfo: { type: String, required: true },
+      secondVariationType: { type: String },
+      secondVariationInfo: { type: String },
       subVariations: [
         {
-          subVariationType: { type: String},
-          subVariationInfo: { type: String},
+          subVariationType: { type: String },
+          subVariationInfo: { type: String },
           stockQty: { type: Number, default: 1 },
           price: { type: Number },
         },
