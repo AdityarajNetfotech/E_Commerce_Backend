@@ -7,7 +7,7 @@ import {sendEmail} from "../utils/sendEmail.js";
 
 // Register Admin
 export const registerAdmin = asyncHandler(async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, mobile, password, address } = req.body;
   const adminExists = await Admin.findOne({ email });
 
   if (adminExists) {
@@ -15,13 +15,15 @@ export const registerAdmin = asyncHandler(async (req, res) => {
     return;
   }
 
-  const admin = await Admin.create({ name, email, password });
+  const admin = await Admin.create({ name, email, mobile, password, address });
 
   if (admin) {
     res.status(201).json({
       _id: admin.id,
       name: admin.name,
       email: admin.email,
+      mobile: admin.mobile,
+      address: admin.address,
       token: generateToken(admin._id),
     });
   } else {
@@ -39,6 +41,8 @@ export const loginAdmin = asyncHandler(async (req, res) => {
       _id: admin.id,
       name: admin.name,
       email: admin.email,
+      mobile: admin.mobile,
+      address: admin.address,
       token: generateToken(admin._id),
     });
   } else {
@@ -174,5 +178,38 @@ export const deleteStudent = asyncHandler(async (req, res) => {
   } catch (error) {
     console.error("Error deleting student:", error);
     res.status(500).json({ message: "Failed to delete student", error: error.message });
+  }
+});
+
+// Get All Admins
+export const getAllAdmins = asyncHandler(async (req, res) => {
+  try {
+    const admins = await Admin.find().select("-password"); // Exclude passwords for security
+    res.json({
+      message: "All admins fetched successfully",
+      admins,
+    });
+  } catch (error) {
+    console.error("Error fetching admins:", error);
+    res.status(500).json({ message: "Failed to fetch admins", error: error.message });
+  }
+});
+
+// Delete Admin
+export const deleteAdmin = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+    const admin = await Admin.findById(id);
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    await admin.deleteOne();
+
+    res.json({ message: "Admin deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting admin:", error);
+    res.status(500).json({ message: "Failed to delete admin", error: error.message });
   }
 });
