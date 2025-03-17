@@ -5,7 +5,7 @@ import Product from "../models/Product.js";
 // ✅ Add to Cart
 export const addToCart = asyncHandler(async (req, res) => {
     const studentId = req.student._id;
-    const { productId, quantity } = req.body;
+    const { productId, quantity, selectedSize, selectedColor, selectedMaterial, price, image } = req.body;
 
     const student = await Student.findById(studentId);
     const product = await Product.findById(productId);
@@ -14,12 +14,26 @@ export const addToCart = asyncHandler(async (req, res) => {
         return res.status(404).json({ message: "Product not found" });
     }
 
-    const cartItem = student.cart.find((item) => item.product.toString() === productId);
+    const cartItem = student.cart.find(
+        (item) => 
+            item.product.toString() === productId &&
+            item.selectedSize === selectedSize &&
+            item.selectedColor === selectedColor &&
+            item.selectedMaterial === selectedMaterial
+    );
 
     if (cartItem) {
-        cartItem.quantity += quantity; // Update quantity
+        cartItem.quantity += quantity;
     } else {
-        student.cart.push({ product: productId, quantity });
+        student.cart.push({
+            product: productId,
+            quantity,
+            selectedSize,
+            selectedColor,
+            selectedMaterial,
+            price,
+            image
+        });
     }
 
     await student.save();

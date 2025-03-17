@@ -11,26 +11,46 @@ const studentSchema = new mongoose.Schema(
       ref: "School",
       required: true,
     },
-    grade:{
-      type: Number, 
-      required: true, 
-      min: 1, 
+    grade: {
+      type: Number,
+      required: true,
+      min: 1,
       max: 12
     },
-    gender: { 
-      type: String, 
-      required: true, 
-      enum: ["Male", "Female", "Others"] 
+    gender: {
+      type: String,
+      required: true,
+      enum: ["Male", "Female", "Others"]
     },
-    number:{
+    number: {
       type: Number,
-      required:true,
-      unique:true
+      required: true,
+      unique: true
     },
     cart: [
       {
         product: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
-        quantity: { type: Number, required: true, default: 1 }
+        quantity: { type: Number, required: true, default: 1 },
+        selectedSize: {
+          type: String,
+          required: false
+        },
+        selectedColor: {
+          type: String,
+          required: false
+        },
+        selectedMaterial: {
+          type: String,
+          required: false
+        },
+        price: {
+          type: Number,
+          required: false
+        },
+        image: {
+          type: String,
+          required: false
+        }
       }
     ],
 
