@@ -5,7 +5,11 @@ const schoolSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  mobile: { type: String, required: true },
+  mobile: {
+    type: Number,
+    required: [true, 'Phone no is required'],
+    trim: true,
+  },
   address: { type: String, required: true },
   affiliationNumber: { type: String, required: true, unique: true },
   affiliationCertificate: { type: String }, // Optional field (Cloudinary URL)

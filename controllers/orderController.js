@@ -4,85 +4,94 @@ import Product from "../models/Product.js";
 
 // ✅ Place an Order (Stock Updates)
 export const placeOrder = asyncHandler(async (req, res) => {
-    const { school, orderItems,address } = req.body;
-    const studentId = req.student._id;
+  const { school, orderItems, address } = req.body;
+  const studentId = req.student._id;
+
+  if (!school || !orderItems || orderItems.length === 0) {
+    return res.status(400).json({ message: "Invalid order data" });
+  }
   
-    if (!school || !orderItems || orderItems.length === 0) {
-      return res.status(400).json({ message: "Invalid order data" });
+  if (
+    !address ||
+    !address.emailId ||
+    !address.phoneNumber ||
+    !address.addressLine1 ||
+    !address.pincode ||
+    !address.town ||
+    !address.city ||
+    !address.state
+  ) {
+    return res.status(400).json({ message: "Complete address details are required" });
+  }
+
+  let totalAmount = 0;
+  let updatedOrderItems = [];
+
+  for (let item of orderItems) {
+    const product = await Product.findById(item.product);
+
+    if (!product) {
+      return res.status(404).json({ message: `Product not found: ${item.product}` });
     }
 
-    if (!address || !address.fullName || !address.phone || !address.street || !address.city || !address.state || !address.postalCode || !address.country) {
-      return res.status(400).json({ message: "Complete address details are required" });
+    let price = 0;
+    let stockQty = 0;
+
+    // ✅ Fetch correct price & stock based on category
+    if (product.category === "Uniform" && product.uniformDetails?.variations[0]?.subVariations[0]) {
+      price = product.uniformDetails.variations[0].subVariations[0].price;
+      stockQty = product.uniformDetails.variations[0].subVariations[0].stockQty;
+    } else if (product.category === "Books" && product.bookDetails) {
+      price = product.bookDetails.price;
+      stockQty = product.bookDetails.stockQty;
+    } else if (product.category === "Stationary" && product.stationaryDetails) {
+      price = product.stationaryDetails.price;
+      stockQty = product.stationaryDetails.stockQty;
+    } else {
+      return res.status(400).json({ message: `Product details missing for ${product.name}` });
     }
-  
-  
-    let totalAmount = 0;
-    let updatedOrderItems = [];
-  
-    for (let item of orderItems) {
-      const product = await Product.findById(item.product);
-  
-      if (!product) {
-        return res.status(404).json({ message: `Product not found: ${item.product}` });
-      }
-  
-      let price = 0;
-      let stockQty = 0;
-  
-      // ✅ Fetch correct price & stock based on category
-      if (product.category === "Uniform" && product.uniformDetails?.variations[0]?.subVariations[0]) {
-        price = product.uniformDetails.variations[0].subVariations[0].price;
-        stockQty = product.uniformDetails.variations[0].subVariations[0].stockQty;
-      } else if (product.category === "Books" && product.bookDetails) {
-        price = product.bookDetails.price;
-        stockQty = product.bookDetails.stockQty;
-      } else if (product.category === "Stationary" && product.stationaryDetails) {
-        price = product.stationaryDetails.price;
-        stockQty = product.stationaryDetails.stockQty;
-      } else {
-        return res.status(400).json({ message: `Product details missing for ${product.name}` });
-      }
-  
-      // ✅ Check stock availability
-      if (stockQty < item.quantity) {
-        return res.status(400).json({ message: `Insufficient stock for ${product.name}` });
-      }
-  
-      // ✅ Update total amount
-      totalAmount += price * item.quantity;
-  
-      // ✅ Store updated order item
-      updatedOrderItems.push({
-        product: product._id,
-        name: product.name,
-        quantity: item.quantity,
-        price,
-      });
-  
-      // ✅ Reduce stock dynamically
-      if (product.category === "Uniform") {
-        product.uniformDetails.variations[0].subVariations[0].stockQty -= item.quantity;
-      } else if (product.category === "Books") {
-        product.bookDetails.stockQty -= item.quantity;
-      } else if (product.category === "Stationary") {
-        product.stationaryDetails.stockQty -= item.quantity;
-      }
-  
-      await product.save();
+
+    // ✅ Check stock availability
+    if (stockQty < item.quantity) {
+      return res.status(400).json({ message: `Insufficient stock for ${product.name}` });
     }
-  
-    // ✅ Create new order
-    const newOrder = new Order({
-      student: studentId,
-      school,
-      address,
-      orderItems: updatedOrderItems,
-      totalAmount,
+
+    // ✅ Update total amount
+    totalAmount += price * item.quantity;
+
+    // ✅ Store updated order item
+    updatedOrderItems.push({
+      product: product._id,
+      name: product.name,
+      quantity: item.quantity,
+      price,
     });
-  
-    const createdOrder = await newOrder.save();
-    res.status(201).json(createdOrder);
+
+    // ✅ Reduce stock dynamically
+    if (product.category === "Uniform") {
+      product.uniformDetails.variations[0].subVariations[0].stockQty -= item.quantity;
+    } else if (product.category === "Books") {
+      product.bookDetails.stockQty -= item.quantity;
+    } else if (product.category === "Stationary") {
+      product.stationaryDetails.stockQty -= item.quantity;
+    }
+
+    await product.save();
+  }
+
+  // ✅ Create new order
+  const newOrder = new Order({
+    student: studentId,
+    school,
+    address,
+    orderItems: updatedOrderItems,
+    totalAmount,
   });
+
+  const createdOrder = await newOrder.save();
+  res.status(201).json(createdOrder);
+});
+
   
 
 // ✅ Get all orders for logged-in student
