@@ -96,15 +96,20 @@ export const placeOrder = asyncHandler(async (req, res) => {
 
 // ✅ Get all orders for logged-in student
 export const getStudentOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({ student: req.student._id }).populate("school", "name");
+  const orders = await Order.find({ student: req.student._id })
+    .populate("orderItems.product", "name image"); // Populate product name & image
+
   res.json(orders);
 });
 
-// ✅ Get all orders for logged-in school
+
 export const getSchoolOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({ school: req.school._id }).populate("student", "name");
+  const orders = await Order.find({ school: req.school._id })
+    .populate("orderItems.product", "name image"); // Populate product name & image
+
   res.json(orders);
 });
+
 
 // ✅ Update Order Status (School only)
 export const updateOrderStatus = asyncHandler(async (req, res) => {
