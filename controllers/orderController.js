@@ -36,11 +36,16 @@ export const placeOrder = asyncHandler(async (req, res) => {
 
     let price = 0;
     let stockQty = 0;
+    let color = null;
+    let size = null;
 
     // ✅ Fetch correct price & stock based on category
     if (product.category === "Uniform" && product.uniformDetails?.variations[0]?.subVariations[0]) {
       price = product.uniformDetails.variations[0].subVariations[0].price;
       stockQty = product.uniformDetails.variations[0].subVariations[0].stockQty;
+      size = product.uniformDetails.variations[0].subVariations[0].subVariationType || "N/A";
+      color = product.uniformDetails.variations[0].secondVariationInfo || "N/A";
+
     } else if (product.category === "Books" && product.bookDetails) {
       price = product.bookDetails.price;
       stockQty = product.bookDetails.stockQty;
@@ -64,7 +69,10 @@ export const placeOrder = asyncHandler(async (req, res) => {
       product: product._id,
       name: product.name,
       quantity: item.quantity,
+      image: product.image.length > 0 ? product.image[0] : "", 
       price,
+      size,
+      color,
     });
 
     // ✅ Reduce stock dynamically
