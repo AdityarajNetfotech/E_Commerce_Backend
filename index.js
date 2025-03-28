@@ -12,6 +12,8 @@ import studentRoutes from "./routes/Studentroutes.js";
 import orderRoutes from "./routes/orderRoutes.js"
 import cartRoutes from "./routes/cartRoutes.js"
 import googleRoute from "./routes/GoogleRoute.js"
+import paymentRoutes from "./routes/paymentRoutes.js"; 
+
 
 dotenv.config();
 const PORT = process.env.PORT || 8000;
@@ -47,6 +49,8 @@ app.use("/api/student", studentRoutes);
 app.use("/api/order", orderRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/googleAuth", googleRoute);
+app.use("/api/payment", paymentRoutes);
+
 
 app.listen(PORT, () => {
   console.log(`App is running on port ${PORT}`);

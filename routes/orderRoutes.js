@@ -4,7 +4,8 @@ import {
   getStudentOrders,
   getSchoolOrders,
   updateOrderStatus,
-  deleteOrder
+  deleteOrder,
+  getOrderById,
 } from "../controllers/orderController.js";
 import { protectStudent, protectSchool, protectAdmin } from "../middleware/authMiddleware.js";
 
@@ -13,6 +14,8 @@ const router = express.Router();
 // ✅ Student routes
 router.post("/add-order", protectStudent, placeOrder);
 router.get("/my-orders", protectStudent, getStudentOrders);
+router.get("/:id", protectStudent, getOrderById);
+
 
 // ✅ School routes
 router.get("/school-orders", protectSchool, getSchoolOrders);

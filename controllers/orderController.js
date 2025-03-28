@@ -110,6 +110,18 @@ export const getStudentOrders = asyncHandler(async (req, res) => {
   res.json(orders);
 });
 
+// ✅ Get Order by ID
+export const getOrderById = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id).populate("orderItems.product", "name image");
+
+  if (!order) {
+    return res.status(404).json({ message: "Order not found" });
+  }
+
+  res.json(order);
+});
+
+
 
 export const getSchoolOrders = asyncHandler(async (req, res) => {
   const orders = await Order.find({ school: req.school._id })
