@@ -131,6 +131,18 @@ export const getSchoolOrders = asyncHandler(async (req, res) => {
 });
 
 
+// ✅ Get all orders (Admin Only)
+export const getAllOrders = asyncHandler(async (req, res) => {
+  const orders = await Order.find({})
+    .populate("student", "name email") 
+    .populate("school", "name") 
+    .populate("orderItems.product", "name image"); 
+
+  res.json(orders);
+});
+
+
+
 // ✅ Update Order Status (School only)
 export const updateOrderStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
