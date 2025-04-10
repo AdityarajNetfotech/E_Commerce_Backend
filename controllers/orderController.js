@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
+import Student from "../models/Student.js";
 
 // ✅ Place an Order (Stock Updates)
 export const placeOrder = asyncHandler(async (req, res) => {
@@ -97,6 +98,22 @@ export const placeOrder = asyncHandler(async (req, res) => {
   });
 
   const createdOrder = await newOrder.save();
+
+  // ✅ Push full order data to the student's orders array
+  const student = await Student.findById(studentId);
+  student.orders.push({
+    orderItems: updatedOrderItems,
+    school,
+    address,
+    totalAmount,
+    paymentStatus: createdOrder.paymentStatus,
+    orderStatus: createdOrder.orderStatus,
+    createdAt: createdOrder.createdAt,
+  });
+
+  await student.save();
+
+
   res.status(201).json(createdOrder);
 });
 
