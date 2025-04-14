@@ -1,6 +1,6 @@
 // const express = require("express");
 import express from "express";
-import { registerAdmin, loginAdmin, getPendingSchools, approveSchool,disapproveSchool,logoutAdmin,getAllSchools,deleteSchool,getAllStudents,deleteStudent,getAllAdmins,deleteAdmin } from "../controllers/AdminAuth.js";
+import { registerAdmin, loginAdmin, getPendingSchools, approveSchool,disapproveSchool,logoutAdmin,getAllSchools,deleteSchool,getAllStudents,deleteStudent,getAllAdmins,deleteAdmin,getAllOrders } from "../controllers/AdminAuth.js";
 import { protectAdmin } from "../middleware/authMiddleware.js";
  
 const router = express.Router();
@@ -17,4 +17,5 @@ router.get("/getAllStudents", getAllStudents);
 router.delete("/deleteStudent/:id", deleteStudent);
 router.get("/getAllAdmins", getAllAdmins); // Only Admins can see other admins
 router.delete("/deleteAdmin/:id", deleteAdmin); // Only Admins can delete an admin
+router.get("/all", getAllOrders);
 export default router;

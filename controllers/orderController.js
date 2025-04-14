@@ -122,7 +122,7 @@ export const placeOrder = asyncHandler(async (req, res) => {
 // ✅ Get all orders for logged-in student
 export const getStudentOrders = asyncHandler(async (req, res) => {
   const orders = await Order.find({ student: req.student._id })
-    .populate("orderItems.product", "name image"); // Populate product name & image
+    .populate("orderItems.product", "name image"); 
 
   res.json(orders);
 });
@@ -142,7 +142,7 @@ export const getOrderById = asyncHandler(async (req, res) => {
 
 export const getSchoolOrders = asyncHandler(async (req, res) => {
   const orders = await Order.find({ school: req.school._id })
-    .populate("orderItems.product", "name image"); // Populate product name & image
+    .populate("orderItems.product", "name image"); 
 
   res.json(orders);
 });
@@ -162,7 +162,8 @@ export const getAllOrders = asyncHandler(async (req, res) => {
 
 // ✅ Update Order Status (School only)
 export const updateOrderStatus = asyncHandler(async (req, res) => {
-  const { status } = req.body;
+  const { orderStatus } = req.body;
+
   const order = await Order.findById(req.params.id);
 
   if (!order) {
@@ -170,13 +171,32 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
   }
 
   if (order.school.toString() !== req.school._id.toString()) {
-    return res.status(401).json({ message: "Not authorized to update this order" });
+    return res.status(401).json({ message: "order not found with this order Id" });
   }
 
-  order.orderStatus = status;
+  order.orderStatus = orderStatus;
   await order.save();
-  res.json(order);
+
+  res.json(order); 
 });
+
+// ✅ Update Payment Status 
+export const updatePaymentStatus = asyncHandler(async (req, res) => {
+  const { paymentStatus } = req.body;
+
+  const order = await Order.findById(req.params.id);
+
+  if (!order) {
+    return res.status(404).json({ message: "Order not found" });
+  }
+
+  order.paymentStatus = paymentStatus;
+  await order.save();
+
+  res.json({ message: "Payment status updated", paymentStatus: order.paymentStatus });
+});
+
+
 
 // ✅ Delete an order (Admin only)
 export const deleteOrder = asyncHandler(async (req, res) => {
@@ -189,3 +209,61 @@ export const deleteOrder = asyncHandler(async (req, res) => {
   await order.deleteOne();
   res.json({ message: "Order deleted successfully" });
 });
+
+
+// ✅ Get Last Used Address for Logged-In Student
+export const getSavedAddress = asyncHandler(async (req, res) => {
+  const latestOrder = await Order.findOne({ student: req.student._id })
+    .sort({ createdAt: -1 })
+    .select("address");
+
+  if (!latestOrder) {
+    return res.status(404).json({ message: "No address found. Place an order first." });
+  }
+
+  res.json(latestOrder.address);
+});
+
+
+// ✅ Update Address in the Latest Order (for reuse)
+export const updateSavedAddress = asyncHandler(async (req, res) => {
+  const {
+    emailId,
+    phoneNumber,
+    addressLine1,
+    addressLine2,
+    pincode,
+    town,
+    city,
+    state,
+  } = req.body;
+
+
+  if (!emailId || !phoneNumber || !addressLine1 || !pincode || !town || !city || !state) {
+    return res.status(400).json({ message: "All required address fields must be filled" });
+  }
+
+  // Get latest order and update its address
+  const latestOrder = await Order.findOne({ student: req.student._id })
+    .sort({ createdAt: -1 });
+
+  if (!latestOrder) {
+    return res.status(404).json({ message: "No order found to update address. Place an order first." });
+  }
+
+  latestOrder.address = {
+    emailId,
+    phoneNumber,
+    addressLine1,
+    addressLine2,
+    pincode,
+    town,
+    city,
+    state,
+  };
+
+  await latestOrder.save();
+
+  res.json({ message: "Address updated successfully", address: latestOrder.address });
+});
+

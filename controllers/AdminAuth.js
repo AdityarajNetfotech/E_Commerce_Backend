@@ -2,6 +2,7 @@ import asyncHandler from "express-async-handler";
 import Admin from "../models/Admin.js";
 import School from "../models/School.js";
 import Student from "../models/Student.js";
+import Order from "../models/Order.js"; 
 import generateToken from "../utils/generateToken.js";
 import {sendEmail} from "../utils/sendEmail.js";
 
@@ -211,5 +212,19 @@ export const deleteAdmin = asyncHandler(async (req, res) => {
   } catch (error) {
     console.error("Error deleting admin:", error);
     res.status(500).json({ message: "Failed to delete admin", error: error.message });
+  }
+});
+
+// Get All Orders
+export const getAllOrders = asyncHandler(async (req, res) => {
+  try {
+    const orders = await Order.find().populate("school student"); // Populate if you want details from referenced models
+    res.json({
+      message: "All orders fetched successfully",
+      orders,
+    });
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res.status(500).json({ message: "Failed to fetch orders", error: error.message });
   }
 });
