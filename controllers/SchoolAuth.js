@@ -13,7 +13,7 @@ const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString()
 
 // ✅ Register School (No Token Generated Here)
 export const registerSchool = asyncHandler(async (req, res) => {
-  const { name, email, password, mobile, address, affiliationNumber } = req.body;
+  const { name, email, password, mobile, state, address, affiliationNumber } = req.body;
   let affiliationCertificate = "";
 
   // Upload certificate if provided
@@ -40,6 +40,7 @@ export const registerSchool = asyncHandler(async (req, res) => {
     email,
     password,
     mobile,
+    state,
     address,
     affiliationNumber,
     affiliationCertificate, // Store Cloudinary URL
@@ -86,6 +87,7 @@ export const loginSchool = asyncHandler(async (req, res) => {
     name: school.name,
     email: school.email,
     mobile: school.mobile,
+    state: school.state,
     address: school.address,
     affiliationNumber: school.affiliationNumber,
     affiliationCertificate: school.affiliationCertificate,
@@ -97,7 +99,7 @@ export const loginSchool = asyncHandler(async (req, res) => {
 // update school
 export const updateSchool = asyncHandler(async (req, res) => {
   const schoolId = req.school._id; // Get logged-in school ID
-  const { name, email, mobile, address, affiliationNumber } = req.body;
+  const { name, email, mobile, state, address, affiliationNumber } = req.body;
   let updatedCertificateUrl = null;
 
   try {
@@ -124,6 +126,7 @@ export const updateSchool = asyncHandler(async (req, res) => {
     if (name) school.name = name;
     if (email) school.email = email;
     if (mobile) school.mobile = mobile;
+    if (state) school.state = state;
     if (address) school.address = address;
     if (affiliationNumber) school.affiliationNumber = affiliationNumber;
     if (updatedCertificateUrl) school.affiliationCertificate = updatedCertificateUrl;
@@ -137,6 +140,7 @@ export const updateSchool = asyncHandler(async (req, res) => {
         name: school.name,
         email: school.email,
         mobile: school.mobile,
+        state: school.state,
         address: school.address,
         affiliationNumber: school.affiliationNumber,
         affiliationCertificate: school.affiliationCertificate,
