@@ -54,6 +54,45 @@ const studentSchema = new mongoose.Schema(
       }
     ],
 
+   orders: [
+    {
+      orderItems: [
+        {
+          product: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
+          name: String,
+          quantity: Number,
+          price: Number,
+          image: [String],
+          size: String,
+          color: String,
+        },
+      ],
+      school: { type: mongoose.Schema.Types.ObjectId, ref: "School", required: true },
+      address: {
+        emailId: String,
+        phoneNumber: String,
+        addressLine1: String,
+        addressLine2: String,
+        pincode: String,
+        town: String,
+        city: String,
+        state: String,
+      },
+      totalAmount: Number,
+      paymentStatus: {
+        type: String,
+        enum: ["Pending", "Paid"],
+        default: "Pending",
+      },
+      orderStatus: {
+        type: String,
+        enum: ["Processing", "Shipped", "Delivered", "Cancelled"],
+        default: "Processing",
+      },
+      createdAt: { type: Date, default: Date.now },
+    },
+  ],
+
     // 🔹 Email Verification OTP
     otp: { type: String },
     otpExpires: { type: Date },
