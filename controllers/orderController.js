@@ -7,7 +7,7 @@ import Student from "../models/Student.js";
 export const placeOrder = asyncHandler(async (req, res) => {
   const { school, orderItems, address } = req.body;
   const studentId = req.student._id;
-
+  
   if (!school || !orderItems || orderItems.length === 0) {
     return res.status(400).json({ message: "Invalid order data" });
   }
@@ -40,13 +40,35 @@ export const placeOrder = asyncHandler(async (req, res) => {
     let color = null;
     let size = null;
 
-    // ✅ Fetch correct price & stock based on category
-    if (product.category === "Uniform" && product.uniformDetails?.variations[0]?.subVariations[0]) {
-      price = product.uniformDetails.variations[0].subVariations[0].price;
-      stockQty = product.uniformDetails.variations[0].subVariations[0].stockQty;
-      size = product.uniformDetails.variations[0].subVariations[0].subVariationType || "N/A";
-      color = product.uniformDetails.variations[0].secondVariationInfo || "N/A";
-
+    if (product.category === "Uniform") {
+      const selectedVariation = product.uniformDetails.variations.find(
+        variation => 
+          variation.variationInfo === item.selectedMaterial && 
+          variation.secondVariationInfo === item.selectedColor
+      );
+      
+      if (!selectedVariation) {
+        return res.status(400).json({ 
+          message: `Selected material/color not found for ${product.name}` 
+        });
+      }
+      
+      // Find the exact size in the selected variation
+      const selectedSize = selectedVariation.subVariations.find(
+        subVar => subVar.subVariationType === item.selectedSize
+      );
+      
+      if (!selectedSize) {
+        return res.status(400).json({ 
+          message: `Selected size not found for ${product.name}` 
+        });
+      }
+      
+      price = selectedSize.price;
+      stockQty = selectedSize.stockQty;
+      size = item.selectedSize;
+      color = item.selectedColor;
+      
     } else if (product.category === "Books" && product.bookDetails) {
       price = product.bookDetails.price;
       stockQty = product.bookDetails.stockQty;
@@ -57,15 +79,14 @@ export const placeOrder = asyncHandler(async (req, res) => {
       return res.status(400).json({ message: `Product details missing for ${product.name}` });
     }
 
-    // ✅ Check stock availability
     if (stockQty < item.quantity) {
-      return res.status(400).json({ message: `Insufficient stock for ${product.name}` });
+      return res.status(400).json({ 
+        message: `Insufficient stock for ${product.name} ${size ? `(Size: ${size}, Color: ${color})` : ''}` 
+      });
     }
 
-    // ✅ Update total amount
     totalAmount += price * item.quantity;
 
-    // ✅ Store updated order item
     updatedOrderItems.push({
       product: product._id,
       name: product.name,
@@ -76,9 +97,22 @@ export const placeOrder = asyncHandler(async (req, res) => {
       color,
     });
 
-    // ✅ Reduce stock dynamically
+    // Reduce stock from the correct variation
     if (product.category === "Uniform") {
-      product.uniformDetails.variations[0].subVariations[0].stockQty -= item.quantity;
+      const variation = product.uniformDetails.variations.find(
+        v => v.variationInfo === item.selectedMaterial && 
+             v.secondVariationInfo === item.selectedColor
+      );
+      
+      if (variation) {
+        const sizeVariation = variation.subVariations.find(
+          s => s.subVariationType === item.selectedSize
+        );
+        
+        if (sizeVariation) {
+          sizeVariation.stockQty -= item.quantity;
+        }
+      }
     } else if (product.category === "Books") {
       product.bookDetails.stockQty -= item.quantity;
     } else if (product.category === "Stationary") {
@@ -88,7 +122,7 @@ export const placeOrder = asyncHandler(async (req, res) => {
     await product.save();
   }
 
-  // ✅ Create new order
+  // Create new order
   const newOrder = new Order({
     student: studentId,
     school,
@@ -99,7 +133,7 @@ export const placeOrder = asyncHandler(async (req, res) => {
 
   const createdOrder = await newOrder.save();
 
-  // ✅ Push full order data to the student's orders array
+  // Push full order data to the student's orders array
   const student = await Student.findById(studentId);
   student.orders.push({
     orderItems: updatedOrderItems,
@@ -112,7 +146,6 @@ export const placeOrder = asyncHandler(async (req, res) => {
   });
 
   await student.save();
-
 
   res.status(201).json(createdOrder);
 });
