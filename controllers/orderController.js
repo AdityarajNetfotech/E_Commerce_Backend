@@ -2,6 +2,8 @@ import asyncHandler from "express-async-handler";
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import Student from "../models/Student.js";
+import School from "../models/School.js";
+import { sendEmail } from "../utils/sendEmail.js";
 
 // ✅ Place an Order (Stock Updates)
 export const placeOrder = asyncHandler(async (req, res) => {
@@ -299,4 +301,58 @@ export const updateSavedAddress = asyncHandler(async (req, res) => {
 
   res.json({ message: "Address updated successfully", address: latestOrder.address });
 });
+
+// ✅ Cancel Order (Student Only)
+export const cancelOrder = asyncHandler(async (req, res) => {
+  const orderId = req.params.id;
+  const studentId = req.student._id;
+
+  const order = await Order.findById(orderId).populate("student").populate("orderItems.product");
+
+  if (!order) {
+    return res.status(404).json({ message: "Order not found" });
+  }
+
+  if (order.student._id.toString() !== studentId.toString()) {
+    return res.status(403).json({ message: "Not authorized to cancel this order" });
+  }
+
+  if (["Delivered", "Cancelled"].includes(order.orderStatus)) {
+    return res.status(400).json({ message: `Cannot cancel an order that is already ${order.orderStatus}` });
+  }
+
+  // Update stock back
+  for (let item of order.orderItems) {
+    const product = item.product;
+
+    if (product) {
+      if (product.category === "Uniform") {
+        product.uniformDetails.variations[0].subVariations[0].stockQty += item.quantity;
+      } else if (product.category === "Books") {
+        product.bookDetails.stockQty += item.quantity;
+      } else if (product.category === "Stationary") {
+        product.stationaryDetails.stockQty += item.quantity;
+      }
+      await product.save();
+    }
+  }
+
+  order.orderStatus = "Cancelled";
+  await order.save();
+
+  // ✅ mail school if  student cancel's any order...
+  const schoolId = order.orderItems[0]?.product?.school;
+  const school = await School.findById(schoolId);
+
+  if (school?.email) {
+    const subject = "Order Cancellation Notification";
+    const message = `Dear ${school.name},\n\nOrder ID: ${order._id} has been cancelled by the customer.\nPlease check and take action to avoid any losses.\n\nRegards,\nEducart Team`;
+  
+    await sendEmail(school.email, subject, message);
+  }
+  
+
+  res.json({ message: "Order cancelled successfully", order });
+});
+
 
