@@ -10,6 +10,7 @@ import {
   updatePaymentStatus,
   getSavedAddress,
   updateSavedAddress,
+  cancelOrder,
 } from "../controllers/orderController.js";
 import { protectStudent, protectSchool, protectAdmin } from "../middleware/authMiddleware.js";
  
@@ -21,6 +22,8 @@ router.get("/all-orders", protectAdmin, getAllOrders);
 // ✅ Student routes
 router.post("/add-order", protectStudent, placeOrder);
 router.get("/my-orders", protectStudent, getStudentOrders);
+router.put("/cancel/:id", protectStudent, cancelOrder);
+
 
 // Adress routes 
 router.get("/address", protectStudent, getSavedAddress);
