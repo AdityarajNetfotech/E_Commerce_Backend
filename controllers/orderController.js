@@ -327,20 +327,47 @@ export const cancelOrder = asyncHandler(async (req, res) => {
 
     if (product) {
       if (product.category === "Uniform") {
-        product.uniformDetails.variations[0].subVariations[0].stockQty += item.quantity;
+        console.log("Processing uniform order item:", item);
+        
+        if (item.color && item.size) {
+          const variations = product.uniformDetails.variations;
+          
+          // Find the variation by color
+          for (let varIndex = 0; varIndex < variations.length; varIndex++) {
+            const variation = variations[varIndex];
+            
+            if (variation.secondVariationInfo === item.color) {
+              for (let subVarIndex = 0; subVarIndex < variation.subVariations.length; subVarIndex++) {
+                const subVariation = variation.subVariations[subVarIndex];
+                
+                if (subVariation.subVariationType === item.size) {
+                  console.log(`Found match! Updating stock for color ${item.color}, size ${item.size}`);
+                  subVariation.stockQty += item.quantity;
+                  console.log(`New stock quantity: ${subVariation.stockQty}`);
+                  break;
+                }
+              }
+              break;
+            }
+          }
+        } else {
+          console.log("Using fallback method to update stock");
+          product.uniformDetails.variations[0].subVariations[0].stockQty += item.quantity;
+        }
       } else if (product.category === "Books") {
         product.bookDetails.stockQty += item.quantity;
       } else if (product.category === "Stationary") {
         product.stationaryDetails.stockQty += item.quantity;
       }
+      
       await product.save();
+      console.log("Product saved with updated stock");
     }
   }
 
   order.orderStatus = "Cancelled";
   await order.save();
 
-  // ✅ mail school if  student cancel's any order...
   const schoolId = order.orderItems[0]?.product?.school;
   const school = await School.findById(schoolId);
 
@@ -351,7 +378,6 @@ export const cancelOrder = asyncHandler(async (req, res) => {
     await sendEmail(school.email, subject, message);
   }
   
-
   res.json({ message: "Order cancelled successfully", order });
 });
 
