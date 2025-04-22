@@ -5,6 +5,7 @@ import Student from "../models/Student.js";
 import School from "../models/School.js";
 import { sendEmail } from "../utils/sendEmail.js";
 
+
 // ✅ Place an Order (Stock Updates)
 export const placeOrder = asyncHandler(async (req, res) => {
   const { school, orderItems, address } = req.body;
@@ -149,6 +150,75 @@ export const placeOrder = asyncHandler(async (req, res) => {
 
   await student.save();
 
+  // Fetch the school to get its email
+  const schoolDoc = await School.findById(school);
+
+  if (schoolDoc?.email) {
+  const subject = "New Order Placed";
+
+  // Build detailed product info
+  const productDetails = updatedOrderItems.map(item => {
+    return `- ${item.name} (Qty: ${item.quantity}, Price: ₹${item.price}${item.size ? `, Size: ${item.size}` : ''}${item.color ? `, Color: ${item.color}` : ''})`;
+  }).join("\n");
+
+  const message = `
+  Dear ${schoolDoc.name},
+
+  A new order has been placed by a student.
+
+  📦 Order ID:  ${createdOrder._id}
+  📅 Date:  ${createdOrder.createdAt.toDateString()}
+  💰 Total Amount:  ₹${totalAmount}
+  📍 Address: 
+   ${address.addressLine1}${address.addressLine2 ? `, ${address.addressLine2}` : ''}
+   ${address.city}, ${address.state} - ${address.pincode}
+   Phone: ${address.phoneNumber}, Email: ${address.emailId}
+
+   🛒 Order Items:
+   ${productDetails}
+
+   Order Status: ${createdOrder.orderStatus}
+
+   Regards,  
+   Educart Team
+   `;
+
+  await sendEmail(schoolDoc.email, subject, message.trim());
+
+  if (address?.emailId) {
+    const studentSubject = "Order Confirmation - Educart";
+
+    const studentMessage = `
+    Dear Student,
+
+    Thank you for your order on Educart!
+
+    🧾 Order ID: ${createdOrder._id}
+    📅 Date: ${createdOrder.createdAt.toDateString()}
+    💰 Total Amount: ₹${totalAmount}
+
+    📍 Delivery Address:
+    ${address.addressLine1}${address.addressLine2 ? `, ${address.addressLine2}` : ''}
+    ${address.city}, ${address.state} - ${address.pincode}
+    Phone: ${address.phoneNumber}, Email: ${address.emailId}
+
+    🛒 Items Ordered:
+    ${productDetails}
+
+    Order Status: ${createdOrder.orderStatus}
+
+    We will notify you once your order is shipped !!
+
+    Regards,  
+    Educart Team
+    `;
+
+    await sendEmail(address.emailId, studentSubject, studentMessage.trim());
+  }
+
+}
+
+
   res.status(201).json(createdOrder);
 });
 
@@ -214,6 +284,8 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
 
   res.json(order); 
 });
+
+
 
 // ✅ Update Payment Status 
 export const updatePaymentStatus = asyncHandler(async (req, res) => {
