@@ -23,7 +23,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:5173", // Allow only your frontend URL
+    origin: "https://e-commerce-frontend-hvyt.vercel.app/", // Allow only your frontend URL
     credentials: true, // Allow cookies and authentication headers
     methods: ["GET", "POST", "PUT", "DELETE"], // Allowed HTTP methods
     allowedHeaders: ["Content-Type", "Authorization"], // Allow these headers
