@@ -13,6 +13,7 @@ const schoolSchema = new mongoose.Schema({
   state: {type: String , required: true},
   address: { type: String, required: true },
   affiliationNumber: { type: String, required: true, unique: true },
+  gstNumber: { type: String, required: true, unique: true },
   affiliationCertificate: { type: String }, // Optional field (Cloudinary URL)
   isApproved: { type: Boolean, default: false },
 
