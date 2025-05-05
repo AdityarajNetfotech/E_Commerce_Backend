@@ -13,7 +13,7 @@ const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString()
 
 // ✅ Register School (No Token Generated Here)
 export const registerSchool = asyncHandler(async (req, res) => {
-  const { name, email, password, mobile, state, address, affiliationNumber } = req.body;
+  const { name, email, password, mobile, state, address,gstNumber, affiliationNumber } = req.body;
   let affiliationCertificate = "";
 
   // Upload certificate if provided
@@ -43,6 +43,7 @@ export const registerSchool = asyncHandler(async (req, res) => {
     state,
     address,
     affiliationNumber,
+    gstNumber,
     affiliationCertificate, // Store Cloudinary URL
   });
 
