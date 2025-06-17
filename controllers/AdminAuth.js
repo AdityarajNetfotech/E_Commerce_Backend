@@ -17,6 +17,7 @@ export const registerAdmin = asyncHandler(async (req, res) => {
   }
 
   const admin = await Admin.create({ name, email, mobile, password, address });
+console.log("admin");
 
   if (admin) {
     res.status(201).json({
